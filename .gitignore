@@ -1,0 +1,39 @@
+# Environment and Secrets (CRITICAL)
+.env
+*.env
+!.env.example
+secrets.yaml
+*secrets*.yaml
+
+# Python Virtual Environments & Dependencies
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Logs & Diagnostics
+*.log
+logs/
+
+# Build & Packaging
+build/
+dist/
+*.egg-info/
+
+# Playwright & Browser Artifacts
+desktop-agent-workspace/screenshots/*.png
+!desktop-agent-workspace/screenshots/.gitkeep
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

@@ -1,0 +1,39 @@
+[project]
+name = "desktop-agent-workspace"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Nitesh Kumar", email = "niteshnunfara0@gmail.com" }
+]
+requires-python = ">=3.11"
+dependencies = [
+    "browser-use>=0.13.10",
+    "langchain-openai>=1.3.4",
+    "mcp[cli]>=2.1.1",
+    "openai>=2.26.0",
+    "playwright>=1.62.0",
+    "pydantic>=2.13.5",
+    "python-dotenv>=1.2.2",
+    "typer>=0.27.2",
+]
+
+[project.scripts]
+desktop-agent-workspace = "desktop_agent_workspace:main"
+
+[build-system]
+requires = ["uv_build>=0.12.13,<0.13.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "pytest-asyncio>=1.4.0",
+    "pytest-mock>=3.15.1",
+]
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+
