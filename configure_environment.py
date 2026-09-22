@@ -122,7 +122,13 @@ def main():
     local_base_url = env_vars.get("LOCAL_LLM_BASE_URL", "http://localhost:11434/v1")
     ollama_host = env_vars.get("OLLAMA_HOST", "http://localhost:11434")
 
-    exec_mode = env_vars.get("EXECUTION_MODE", "").strip().lower()
+    exec_mode = ""
+    for i, arg in enumerate(sys.argv):
+        if arg == "--mode" and i + 1 < len(sys.argv):
+            exec_mode = sys.argv[i + 1].strip().lower()
+
+    if not exec_mode:
+        exec_mode = env_vars.get("EXECUTION_MODE", "").strip().lower()
     if not exec_mode:
         exec_mode = "local" if use_local else "hybrid"
 
@@ -224,7 +230,7 @@ def main():
         f"GOOSE_PROVIDER: {active_provider}",
         f"GOOSE_MODEL: {active_model}",
         "GOOSE_TELEMETRY_ENABLED: false",
-        "GOOSE_TOOLSHIM: false",
+        f"GOOSE_TOOLSHIM: {'true' if active_provider == 'ollama' else 'false'}",
         "",
         "providers:",
         "  ollama:",

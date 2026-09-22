@@ -19,27 +19,28 @@ echo  [1] Start Goose Session (HYBRID: Cloud Orchestrator + Local Ollama Worker)
 echo  [2] Start Goose Session (100%% Local: Ollama Qwen2.5-Coder:7B)
 echo  [3] Start Goose Session (100%% Cloud: OpenRouter Gemini 3.8 Flash)
 echo  [4] Open Google Chrome (Profile 9: Anjali Kashyap) with Remote Debugging (port 9222)
-echo  [5] Test Browser Control (Visible Chromium Actuator Test)
-echo  [6] Run Antigravity Agent Script
-echo  [7] Test Local LLM Benchmark (Qwen2.5-Coder:7B via Ollama)
-echo  [8] Run Diagnostics & Tests
-echo  [9] Exit
+echo  [5] Auto-Apply Startup Jobs from CSV (Anjali Profile + Chrome Profile 9)
+echo  [6] Test Browser Control (Visible Chromium Actuator Test)
+echo  [7] Run Antigravity Agent Script
+echo  [8] Test Local LLM Benchmark (Qwen2.5-Coder:7B via Ollama)
+echo  [9] Run Diagnostics & Tests
+echo  [0] Exit
 echo.
 echo =====================================================================
 
-:: Default choice 1 after 5 seconds if no key pressed
-choice /c 123456789 /n /t 5 /d 1 /m "Select option (1-9, default 1 in 5s): "
+choice /c 1234567890 /n /t 5 /d 1 /m "Select option (1-9, 0 to exit, default 1 in 5s): "
 set "SEL=%ERRORLEVEL%"
 
 if "%SEL%"=="1" goto start_goose_hybrid
 if "%SEL%"=="2" goto start_goose_local
 if "%SEL%"=="3" goto start_goose_cloud
 if "%SEL%"=="4" goto start_chrome_cdp
-if "%SEL%"=="5" goto test_browser
-if "%SEL%"=="6" goto run_antigravity
-if "%SEL%"=="7" goto test_local_llm
-if "%SEL%"=="8" goto run_tests
-if "%SEL%"=="9" exit /b 0
+if "%SEL%"=="5" goto run_apply_jobs
+if "%SEL%"=="6" goto test_browser
+if "%SEL%"=="7" goto run_antigravity
+if "%SEL%"=="8" goto test_local_llm
+if "%SEL%"=="9" goto run_tests
+if "%SEL%"=="10" exit /b 0
 
 :start_goose_hybrid
 cls
@@ -50,6 +51,7 @@ echo Worker Agent: Local Ollama (Qwen2.5-Coder:7B on GTX 1650) [$0 Tokens]
 echo Savings:      ~90%% reduction in cloud API token usage
 echo =====================================================================
 echo.
+python configure_environment.py --mode hybrid
 goose session --provider openrouter --model google/gemini-3.8-flash
 goto end
 
@@ -59,8 +61,10 @@ echo =====================================================================
 echo Starting Goose Session with 100%% LOCAL OLLAMA (Qwen2.5-Coder:7B)...
 echo Hardware: NVIDIA GTX 1650 (CUDA) + AMD Ryzen 5
 echo Model:    qwen2.5-coder:7b (100%% Local - Zero Cloud Tokens)
+echo Toolshim: Enabled via Ollama (mistral-nemo alias)
 echo =====================================================================
 echo.
+python configure_environment.py --mode local
 goose session --provider ollama --model qwen2.5-coder:7b
 goto end
 
@@ -72,12 +76,25 @@ echo Provider: OpenRouter
 echo Model:    google/gemini-3.8-flash
 echo =====================================================================
 echo.
+python configure_environment.py --mode cloud
 goose session --provider openrouter --model google/gemini-3.8-flash
 goto end
 
 :start_chrome_cdp
 call launch_chrome_for_agent.bat
 goto :eof
+
+:run_apply_jobs
+cls
+echo =====================================================================
+echo Launching Automated Startup Job Application Runner...
+echo Candidate: Anjali Kashyap (anjalikashyap9608@gmail.com)
+echo CSV:       C:\Users\nites\Downloads\STARTUP_2026-09-22 - Sheet1.csv
+echo Resume:    C:\Users\nites\Music\ai_data\anjali_data\AnjaliResume.pdf
+echo =====================================================================
+echo.
+uv --directory desktop-agent-workspace run python ..\apply_startup_jobs.py
+goto end
 
 :test_browser
 cls
