@@ -212,7 +212,7 @@ async def browser_run_agent(task_instruction: str) -> str:
         if use_local:
             from langchain_openai import ChatOpenAI
             local_base_url = os.getenv("LOCAL_LLM_BASE_URL", "http://localhost:11434/v1")
-            local_model = os.getenv("LOCAL_LLM_MODEL", "qwen2.5-coder:14b")
+            local_model = os.getenv("LOCAL_LLM_MODEL", "qwen2.5-coder:7b")
             llm = ChatOpenAI(
                 model=local_model,
                 api_key="local-token",
