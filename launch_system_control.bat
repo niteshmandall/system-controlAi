@@ -18,26 +18,28 @@ echo.
 echo  [1] Start Goose Session (HYBRID: Cloud Orchestrator + Local Ollama Worker) [RECOMMENDED]
 echo  [2] Start Goose Session (100%% Local: Ollama Qwen2.5-Coder:7B)
 echo  [3] Start Goose Session (100%% Cloud: OpenRouter Gemini 3.8 Flash)
-echo  [4] Test Browser Control (Visible Chromium Actuator Test)
-echo  [5] Run Antigravity Agent Script
-echo  [6] Test Local LLM Benchmark (Qwen2.5-Coder:7B via Ollama)
-echo  [7] Run Diagnostics & Tests
-echo  [8] Exit
+echo  [4] Open Google Chrome (Profile 9: Anjali Kashyap) with Remote Debugging (port 9222)
+echo  [5] Test Browser Control (Visible Chromium Actuator Test)
+echo  [6] Run Antigravity Agent Script
+echo  [7] Test Local LLM Benchmark (Qwen2.5-Coder:7B via Ollama)
+echo  [8] Run Diagnostics & Tests
+echo  [9] Exit
 echo.
 echo =====================================================================
 
 :: Default choice 1 after 5 seconds if no key pressed
-choice /c 12345678 /n /t 5 /d 1 /m "Select option (1-8, default 1 in 5s): "
+choice /c 123456789 /n /t 5 /d 1 /m "Select option (1-9, default 1 in 5s): "
 set "SEL=%ERRORLEVEL%"
 
 if "%SEL%"=="1" goto start_goose_hybrid
 if "%SEL%"=="2" goto start_goose_local
 if "%SEL%"=="3" goto start_goose_cloud
-if "%SEL%"=="4" goto test_browser
-if "%SEL%"=="5" goto run_antigravity
-if "%SEL%"=="6" goto test_local_llm
-if "%SEL%"=="7" goto run_tests
-if "%SEL%"=="8" exit /b 0
+if "%SEL%"=="4" goto start_chrome_cdp
+if "%SEL%"=="5" goto test_browser
+if "%SEL%"=="6" goto run_antigravity
+if "%SEL%"=="7" goto test_local_llm
+if "%SEL%"=="8" goto run_tests
+if "%SEL%"=="9" exit /b 0
 
 :start_goose_hybrid
 cls
@@ -72,6 +74,10 @@ echo =====================================================================
 echo.
 goose session --provider openrouter --model google/gemini-3.8-flash
 goto end
+
+:start_chrome_cdp
+call launch_chrome_for_agent.bat
+goto :eof
 
 :test_browser
 cls

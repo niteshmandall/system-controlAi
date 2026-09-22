@@ -148,7 +148,13 @@ def main():
         print(f"[+] Orchestrator Brain:  openrouter ({openrouter_model})")
         print(f"[+] Browser/Task Worker: openrouter ({openrouter_model})")
 
+    chrome_mode = env_vars.get("CHROME_MODE", "auto")
+    chrome_cdp_url = env_vars.get("CHROME_CDP_URL", "http://localhost:9222")
+    chrome_profile_dir = env_vars.get("CHROME_PROFILE_DIRECTORY", "Profile 9")
+    chrome_user_data_dir = env_vars.get("CHROME_USER_DATA_DIR", "")
+
     print(f"[+] Browser Headless:    {headless}")
+    print(f"[+] Chrome Integration:  {chrome_mode.upper()} (CDP: {chrome_cdp_url}, Profile: '{chrome_profile_dir}')")
 
     # 3. Generate cross-platform MCP Server configuration
     uv_posix = Path(uv_bin).resolve().as_posix()
@@ -161,7 +167,11 @@ def main():
         "LOCAL_LLM_BASE_URL": local_base_url,
         "LOCAL_LLM_MODEL": local_model,
         "OPENROUTER_API_KEY": openrouter_key,
-        "OPENROUTER_MODEL": openrouter_model
+        "OPENROUTER_MODEL": openrouter_model,
+        "CHROME_MODE": chrome_mode,
+        "CHROME_CDP_URL": chrome_cdp_url,
+        "CHROME_PROFILE_DIRECTORY": chrome_profile_dir,
+        "CHROME_USER_DATA_DIR": chrome_user_data_dir
     }
 
     mcp_config = {
@@ -255,6 +265,10 @@ def main():
         f"      LOCAL_LLM_BASE_URL: \"{local_base_url}\"",
         f"      LOCAL_LLM_MODEL: \"{local_model}\"",
         f"      OPENROUTER_API_KEY: \"{openrouter_key}\"",
+        f"      CHROME_MODE: \"{chrome_mode}\"",
+        f"      CHROME_CDP_URL: \"{chrome_cdp_url}\"",
+        f"      CHROME_PROFILE_DIRECTORY: \"{chrome_profile_dir}\"",
+        f"      CHROME_USER_DATA_DIR: \"{chrome_user_data_dir}\"",
         "    timeout: 300",
         "    description: \"Browser-Use MCP Server: Autonomous browser actuation powered by Playwright and Chromium\"",
         "  todo:",

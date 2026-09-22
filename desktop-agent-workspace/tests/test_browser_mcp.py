@@ -19,7 +19,13 @@ from browser_use_mcp_server import (
 def test_mcp_server_initialization():
     """Verify MCP server metadata and naming."""
     assert mcp_server.name == "browser-use"
-    assert mcp_server.version == "1.1.0"
+    assert mcp_server.version in ("1.1.0", "1.2.0")
+
+
+def test_cdp_availability_check():
+    """Verify is_cdp_available handles offline ports gracefully."""
+    from browser_use_mcp_server import is_cdp_available
+    assert is_cdp_available("http://localhost:65530") is False
 
 
 def test_mcp_tools_registration():

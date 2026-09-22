@@ -10,9 +10,11 @@ Supports:
 """
 
 import asyncio
+import json
 import os
 import platform
 import sys
+import urllib.request
 from pathlib import Path
 from typing import Optional
 from dotenv import load_dotenv
@@ -27,11 +29,17 @@ from playwright.async_api import async_playwright, Browser, BrowserContext, Page
 CURRENT_OS = platform.system()
 HEADLESS = os.getenv("BROWSER_HEADLESS", "false").strip().lower() in ("true", "1", "yes")
 
+# Chrome Profile & CDP Configuration
+CHROME_MODE = os.getenv("CHROME_MODE", "auto").strip().lower()
+CHROME_CDP_URL = os.getenv("CHROME_CDP_URL", "http://localhost:9222").strip()
+CHROME_PROFILE_DIR = os.getenv("CHROME_PROFILE_DIRECTORY", "Profile 9").strip()
+CHROME_USER_DATA_DIR = os.getenv("CHROME_USER_DATA_DIR", "").strip()
+
 # Initialize MCP Server
 mcp_server = MCPServer(
     name="browser-use",
-    version="1.1.0",
-    instructions="Universal cross-platform browser control server powered by Browser-Use, Playwright, and OpenRouter."
+    version="1.2.0",
+    instructions="Universal cross-platform browser control server powered by Browser-Use, Playwright, Chrome Profiles, and OpenRouter."
 )
 
 # Global browser session state
@@ -39,36 +47,126 @@ _playwright = None
 _browser: Optional[Browser] = None
 _context: Optional[BrowserContext] = None
 _page: Optional[Page] = None
+_is_cdp_session: bool = False
 _lock = asyncio.Lock()
 
 
+def is_cdp_available(url: str = "http://localhost:9222") -> bool:
+    """Quickly verify if a Chrome instance with remote debugging is active."""
+    try:
+        endpoint = f"{url.rstrip('/')}/json/version"
+        req = urllib.request.Request(endpoint, headers={"User-Agent": "SystemControlAI"})
+        with urllib.request.urlopen(req, timeout=1.2) as resp:
+            if resp.status == 200:
+                data = json.loads(resp.read().decode("utf-8", errors="ignore"))
+                return "webSocketDebuggerUrl" in data or "Browser" in data
+    except Exception:
+        return False
+    return False
+
+
 async def _get_or_create_page() -> Page:
-    """Ensure a Chromium browser instance is active and return the current page."""
-    global _playwright, _browser, _context, _page
+    """Ensure a Chrome/Chromium browser instance is active and return the current page."""
+    global _playwright, _browser, _context, _page, _is_cdp_session
     async with _lock:
         if _playwright is None:
             _playwright = await async_playwright().start()
 
-        if _browser is None or not _browser.is_connected():
+        # Check if current page is still open and responsive
+        if _page is not None and not _page.is_closed():
+            return _page
+
+        # If context is alive and has open pages
+        if _context is not None:
+            try:
+                pages = _context.pages
+                if pages and not pages[-1].is_closed():
+                    _page = pages[-1]
+                    return _page
+                _page = await _context.new_page()
+                return _page
+            except Exception:
+                pass
+
+        # 1. Connect over CDP (Remote Debugging) to existing Chrome if available
+        if CHROME_MODE in ("cdp", "auto") and is_cdp_available(CHROME_CDP_URL):
+            try:
+                print(f"[browser-use] Attaching to active Chrome via CDP at {CHROME_CDP_URL}...", file=sys.stderr)
+                _browser = await _playwright.chromium.connect_over_cdp(CHROME_CDP_URL)
+                _is_cdp_session = True
+                if _browser.contexts:
+                    _context = _browser.contexts[0]
+                else:
+                    _context = await _browser.new_context()
+
+                if _context.pages:
+                    _page = _context.pages[-1]
+                else:
+                    _page = await _context.new_page()
+
+                title = await _page.title()
+                print(f"[browser-use] Successfully attached to existing Chrome! Current Tab: '{title}'", file=sys.stderr)
+                return _page
+            except Exception as e:
+                print(f"[browser-use] CDP attach failed: {e}. Falling back to persistent profile...", file=sys.stderr)
+                _is_cdp_session = False
+
+        # 2. Launch real Google Chrome with persistent profile if mode is profile/auto
+        if CHROME_MODE in ("profile", "auto"):
+            user_data_path = CHROME_USER_DATA_DIR
+            if not user_data_path and CURRENT_OS == "Windows":
+                user_data_path = str(Path(os.environ.get("LOCALAPPDATA", "")) / "Google" / "Chrome" / "User Data")
+
             launch_args = ["--no-sandbox"]
             if CURRENT_OS == "Windows":
                 launch_args.append("--start-maximized")
+            if CHROME_PROFILE_DIR:
+                launch_args.append(f"--profile-directory={CHROME_PROFILE_DIR}")
 
-            _browser = await _playwright.chromium.launch(
-                headless=HEADLESS,
-                args=launch_args
-            )
-            _context = await _browser.new_context(
-                no_viewport=True if CURRENT_OS == "Windows" else False,
-                viewport=None if CURRENT_OS == "Windows" else {"width": 1280, "height": 800},
-                user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
-            )
-            _page = await _context.new_page()
+            try:
+                print(f"[browser-use] Launching real Chrome with profile '{CHROME_PROFILE_DIR}'...", file=sys.stderr)
+                _context = await _playwright.chromium.launch_persistent_context(
+                    user_data_dir=user_data_path,
+                    channel="chrome",
+                    headless=HEADLESS,
+                    no_viewport=True if CURRENT_OS == "Windows" else False,
+                    viewport=None if CURRENT_OS == "Windows" else {"width": 1280, "height": 800},
+                    args=launch_args
+                )
+                _is_cdp_session = False
+                _page = _context.pages[0] if _context.pages else await _context.new_page()
+                return _page
+            except Exception as e:
+                print(f"[browser-use] Notice: Standard Chrome profile locked ({e}). Using dedicated agent profile...", file=sys.stderr)
+                agent_profile = str(Path(os.environ.get("LOCALAPPDATA", "")) / "Google" / "Chrome" / "User Data - SystemControlAI")
+                _context = await _playwright.chromium.launch_persistent_context(
+                    user_data_dir=agent_profile,
+                    channel="chrome",
+                    headless=HEADLESS,
+                    no_viewport=True if CURRENT_OS == "Windows" else False,
+                    viewport=None if CURRENT_OS == "Windows" else {"width": 1280, "height": 800},
+                    args=["--no-sandbox", "--start-maximized"]
+                )
+                _is_cdp_session = False
+                _page = _context.pages[0] if _context.pages else await _context.new_page()
+                return _page
 
-        if _page is None or _page.is_closed():
-            if _context:
-                _page = await _context.new_page()
+        # 3. Default fallback: Clean temporary Chromium sandbox
+        launch_args = ["--no-sandbox"]
+        if CURRENT_OS == "Windows":
+            launch_args.append("--start-maximized")
 
+        _browser = await _playwright.chromium.launch(
+            headless=HEADLESS,
+            args=launch_args
+        )
+        _is_cdp_session = False
+        _context = await _browser.new_context(
+            no_viewport=True if CURRENT_OS == "Windows" else False,
+            viewport=None if CURRENT_OS == "Windows" else {"width": 1280, "height": 800},
+            user_agent="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+        )
+        _page = await _context.new_page()
         return _page
 
 
@@ -261,22 +359,35 @@ async def browser_run_agent(task_instruction: str) -> str:
 
 @mcp_server.tool()
 async def browser_close() -> str:
-    """Close the active Chromium browser session."""
-    global _playwright, _browser, _context, _page
+    """Close the active browser session or disconnect from CDP."""
+    global _playwright, _browser, _context, _page, _is_cdp_session
     async with _lock:
-        if _page and not _page.is_closed():
-            await _page.close()
+        if _is_cdp_session:
+            # For CDP, disconnect without closing the user's active Chrome!
+            if _browser and _browser.is_connected():
+                await _browser.close()
             _page = None
-        if _context:
-            await _context.close()
             _context = None
-        if _browser and _browser.is_connected():
-            await _browser.close()
             _browser = None
-        if _playwright:
-            await _playwright.stop()
-            _playwright = None
-    return "Browser session closed successfully."
+            _is_cdp_session = False
+            if _playwright:
+                await _playwright.stop()
+                _playwright = None
+            return "Disconnected from active Chrome session successfully (Chrome and your tabs remain open)."
+        else:
+            if _page and not _page.is_closed():
+                await _page.close()
+                _page = None
+            if _context:
+                await _context.close()
+                _context = None
+            if _browser and _browser.is_connected():
+                await _browser.close()
+                _browser = None
+            if _playwright:
+                await _playwright.stop()
+                _playwright = None
+            return "Browser session closed successfully."
 
 
 def main():

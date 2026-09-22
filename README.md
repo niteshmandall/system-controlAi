@@ -68,9 +68,15 @@ LOCAL_LLM_BASE_URL=http://localhost:11434/v1
 LOCAL_LLM_MODEL=qwen2.5-coder:7b
 OLLAMA_HOST=http://localhost:11434
 
-# Browser Automation
+# Browser Automation & Real Google Chrome Profile
 BROWSER_HEADLESS=false
 BROWSER_USE_LOGGING_LEVEL=info
+
+# Real Chrome Profile & Remote Debugging (CDP)
+CHROME_MODE=auto
+CHROME_CDP_URL=http://localhost:9222
+CHROME_PROFILE_DIRECTORY=Profile 9
+CHROME_USER_DATA_DIR=C:\Users\nites\AppData\Local\Google\Chrome\User Data
 ```
 
 ### 2. Generate Configuration
@@ -78,7 +84,7 @@ Run the automatic cross-platform configurator:
 ```bash
 python configure_environment.py
 ```
-This dynamically locates your `uv` binary, configures Goose's global settings, registers the `browser_use` MCP server, and disables unused platform extensions for maximum speed.
+This registers the `browser_use` MCP server in Goose's global configuration with Chrome Profile and CDP auto-attach support.
 
 ### 3. Launch System Control AI
 On Windows, run the interactive launcher:
@@ -86,7 +92,7 @@ On Windows, run the interactive launcher:
 .\launch_system_control.bat
 ```
 
-You will see the 8-option interactive menu:
+You will see the 9-option interactive menu:
 ```text
 =====================================================================
              SYSTEM CONTROL AI - AUTONOMOUS AGENT
@@ -94,32 +100,37 @@ You will see the 8-option interactive menu:
  [1] Start Goose Session (HYBRID: Cloud Orchestrator + Local Worker) [RECOMMENDED]
  [2] Start Goose Session (100% Local: Ollama Qwen2.5-Coder:7B)
  [3] Start Goose Session (100% Cloud: OpenRouter Gemini 3.8 Flash)
- [4] Test Browser Control (Visible Chromium Actuator Test)
- [5] Run Antigravity Agent Script
- [6] Test Local LLM Benchmark (Qwen2.5-Coder:7B via Ollama)
- [7] Run Diagnostics & Tests
- [8] Exit
+ [4] Open Google Chrome (Profile 9: Anjali Kashyap) with Remote Debugging (port 9222)
+ [5] Test Browser Control (Visible Chromium Actuator Test)
+ [6] Run Antigravity Agent Script
+ [7] Test Local LLM Benchmark (Qwen2.5-Coder:7B via Ollama)
+ [8] Run Diagnostics & Tests
+ [9] Exit
 =====================================================================
 ```
-*(Default option `[1]` auto-starts in 5 seconds if no key is pressed).*
+
+> **Applying for Jobs with Active Logins**:
+> 1. Select **`[4]`** to open your real Google Chrome with **Profile 9** and Remote Debugging on port 9222.
+> 2. Open any job platform (LinkedIn, Ashby, Wellfound, Peerlist, Greenhouse) where you are already signed in.
+> 3. Start your Goose session with **`[1]`**. Goose will automatically attach directly to your open Chrome window, using your existing cookies, saved logins, and active sessions!
 
 ---
 
 ## 🧪 Testing & Verification
 
-Run the comprehensive 20-test automated test suite:
+Run the comprehensive 21-test automated test suite:
 ```bash
 cd desktop-agent-workspace
 uv run pytest
 ```
 ```text
-tests\test_browser_mcp.py .....       [ 25%]
-tests\test_cross_platform.py ....     [ 45%]
-tests\test_environment.py .....       [ 70%]
+tests\test_browser_mcp.py ......      [ 28%]
+tests\test_cross_platform.py ....     [ 47%]
+tests\test_environment.py .....       [ 71%]
 tests\test_local_llm.py ...           [ 85%]
 tests\test_openrouter_config.py ...   [100%]
 
-============================= 20 passed in 10.41s =============================
+============================= 21 passed in 35.60s =============================
 ```
 
 To test visible Chromium actuation directly:
