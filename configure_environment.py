@@ -122,19 +122,31 @@ def main():
     local_base_url = env_vars.get("LOCAL_LLM_BASE_URL", "http://localhost:11434/v1")
     ollama_host = env_vars.get("OLLAMA_HOST", "http://localhost:11434")
 
-    if use_local:
-        active_provider = local_provider
-        active_model = local_model
-        print(f"[+] Mode:                LOCAL OPEN SOURCE ({local_provider})")
-        print(f"[+] Provider:            {local_provider}")
-        print(f"[+] Model:               {local_model}")
-        print(f"[+] Endpoint:            {local_base_url}")
-    else:
+    exec_mode = env_vars.get("EXECUTION_MODE", "").strip().lower()
+    if not exec_mode:
+        exec_mode = "local" if use_local else "hybrid"
+
+    if exec_mode == "hybrid":
         active_provider = "openrouter"
         active_model = openrouter_model
-        print(f"[+] Mode:                CLOUD (OpenRouter)")
-        print(f"[+] Provider:            openrouter")
-        print(f"[+] Model:               {openrouter_model}")
+        mcp_use_local = "true"
+        print(f"[+] Execution Mode:      HYBRID (Cloud Orchestrator + Local Sub-Agent) [RECOMMENDED]")
+        print(f"[+] Orchestrator Brain:  {active_provider} ({active_model})")
+        print(f"[+] Browser/Task Worker: {local_provider} ({local_model}) on GTX 1650 [$0 Tokens]")
+    elif exec_mode == "local":
+        active_provider = local_provider
+        active_model = local_model
+        mcp_use_local = "true"
+        print(f"[+] Execution Mode:      100% PURE LOCAL ({local_provider})")
+        print(f"[+] Orchestrator Brain:  {local_provider} ({local_model})")
+        print(f"[+] Browser/Task Worker: {local_provider} ({local_model}) on GTX 1650")
+    else:  # cloud
+        active_provider = "openrouter"
+        active_model = openrouter_model
+        mcp_use_local = "false"
+        print(f"[+] Execution Mode:      100% CLOUD (OpenRouter)")
+        print(f"[+] Orchestrator Brain:  openrouter ({openrouter_model})")
+        print(f"[+] Browser/Task Worker: openrouter ({openrouter_model})")
 
     print(f"[+] Browser Headless:    {headless}")
 
@@ -145,7 +157,7 @@ def main():
     mcp_env = {
         "BROWSER_HEADLESS": headless,
         "BROWSER_USE_LOGGING_LEVEL": "info",
-        "USE_LOCAL_LLM": "true" if use_local else "false",
+        "USE_LOCAL_LLM": mcp_use_local,
         "LOCAL_LLM_BASE_URL": local_base_url,
         "LOCAL_LLM_MODEL": local_model,
         "OPENROUTER_API_KEY": openrouter_key,

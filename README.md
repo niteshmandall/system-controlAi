@@ -126,6 +126,8 @@ goose session
 system-controlAi/
 ├── configure_environment.py            # Universal cross-platform configuration generator
 ├── README.md                           # Main documentation & quickstart
+├── HYBRID_ARCHITECTURE.md              # Cost-saving Hybrid Architecture (Cloud Orchestrator + Local Worker)
+├── HARDWARE_EVALUATION.md              # Laptop hardware audit & model benchmark evaluation
 ├── LOCAL_LLM_GUIDE.md                  # Comprehensive guide for running open-source local LLMs (Ollama / LM Studio)
 ├── TESTING_GUIDE.md                    # Test suite runner and automated test cases
 ├── SETUP_AND_ARCHITECTURE.md           # Architecture, OpenRouter wiring & MCP schema
