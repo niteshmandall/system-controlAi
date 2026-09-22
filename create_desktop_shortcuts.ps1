@@ -9,6 +9,7 @@ $JobShortcut.TargetPath = Join-Path $WorkspacePath "launch_job_application_agent
 $JobShortcut.WorkingDirectory = $WorkspacePath
 $JobShortcut.Description = "1-Click Launch: Chrome (Profile 9) + System Control AI Job Agent"
 
+# Use Chrome icon if available, otherwise shell icon
 $ChromeExe = "C:\Program Files\Google\Chrome\Application\chrome.exe"
 if (Test-Path $ChromeExe) {
     $JobShortcut.IconLocation = "$ChromeExe,0"
