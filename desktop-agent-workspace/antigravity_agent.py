@@ -54,15 +54,47 @@ async def run_antigravity_agent():
             print("\n")
 
     except ImportError:
-        # 2. Universal OpenRouter Agent Runner
+        use_local = os.getenv("USE_LOCAL_LLM", "false").strip().lower() in ("true", "1", "yes")
         openrouter_key = os.getenv("OPENROUTER_API_KEY")
         gemini_key = os.getenv("GEMINI_API_KEY")
 
-        if openrouter_key:
+        # 1. Local Open Source Model (Ollama / LM Studio)
+        if use_local:
+            local_model = os.getenv("LOCAL_LLM_MODEL", "qwen2.5-coder:14b")
+            local_base_url = os.getenv("LOCAL_LLM_BASE_URL", "http://localhost:11434/v1")
+            print(f"[*] Running via Local Open Source LLM ({local_model}) at {local_base_url}...")
+            from openai import OpenAI
+
+            client = OpenAI(
+                base_url=local_base_url,
+                api_key="local-token"
+            )
+
+            try:
+                response = client.chat.completions.create(
+                    model=local_model,
+                    messages=[
+                        {
+                            "role": "system",
+                            "content": "You are an autonomous Computer-Use Agent with system and browser control access."
+                        },
+                        {
+                            "role": "user",
+                            "content": "Confirm agent readiness for local computer control and browser actuation."
+                        }
+                    ]
+                )
+                print(f"\n[Local LLM ({local_model}) Response]:\n{response.choices[0].message.content}\n")
+            except Exception as e:
+                print(f"[X] Failed to connect to local LLM server at {local_base_url}: {e}")
+                print("    Make sure Ollama or LM Studio is running. See LOCAL_LLM_GUIDE.md.")
+
+        # 2. Cloud: Universal OpenRouter Provider
+        elif openrouter_key:
             print("[*] Running via Universal OpenRouter Provider...")
             from openai import OpenAI
 
-            model = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet")
+            model = os.getenv("OPENROUTER_MODEL", "google/gemini-3.8-flash")
             base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
 
             client = OpenAI(
@@ -100,8 +132,8 @@ async def run_antigravity_agent():
             print(f"\n[Gemini Agent Response]:\n{response.text}\n")
 
         else:
-            print("[X] No API Key found.")
-            print("    Please set OPENROUTER_API_KEY in desktop-agent-workspace/.env to run.")
+            print("[X] No API Key or Local LLM configured.")
+            print("    Set OPENROUTER_API_KEY or USE_LOCAL_LLM=true in desktop-agent-workspace/.env.")
 
 
 if __name__ == "__main__":

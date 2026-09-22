@@ -126,6 +126,8 @@ goose session
 system-controlAi/
 ├── configure_environment.py            # Universal cross-platform configuration generator
 ├── README.md                           # Main documentation & quickstart
+├── LOCAL_LLM_GUIDE.md                  # Comprehensive guide for running open-source local LLMs (Ollama / LM Studio)
+├── TESTING_GUIDE.md                    # Test suite runner and automated test cases
 ├── SETUP_AND_ARCHITECTURE.md           # Architecture, OpenRouter wiring & MCP schema
 ├── MEMORY_AND_OPERATIONS_GUIDE.md      # Maintenance guide, commands, and debugging
 └── desktop-agent-workspace/            # Python agent workspace
@@ -133,7 +135,7 @@ system-controlAi/
     ├── .env.example                    # Template environment file
     ├── pyproject.toml                  # Python 3.12 dependencies
     ├── browser_use_mcp_server.py       # Cross-platform MCP server (stdio & test mode)
-    ├── antigravity_agent.py            # Universal OpenRouter / Antigravity agent
+    ├── antigravity_agent.py            # Universal OpenRouter / Local LLM agent
     ├── screenshots/                    # Captured browser screenshots
     └── src/                            # Package source modules
 ```

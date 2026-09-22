@@ -193,24 +193,35 @@ async def browser_run_agent(task_instruction: str) -> str:
     Args:
         task_instruction: Clear instruction of what to accomplish on the web.
     """
+    use_local = os.getenv("USE_LOCAL_LLM", "false").strip().lower() in ("true", "1", "yes")
     openrouter_key = os.getenv("OPENROUTER_API_KEY")
     gemini_key = os.getenv("GEMINI_API_KEY")
     anthropic_key = os.getenv("ANTHROPIC_API_KEY")
     openai_key = os.getenv("OPENAI_API_KEY")
 
-    if not any([openrouter_key, gemini_key, anthropic_key, openai_key]):
+    if not use_local and not any([openrouter_key, gemini_key, anthropic_key, openai_key]):
         return (
-            "Error: No LLM API key detected. Please configure OPENROUTER_API_KEY "
-            "in desktop-agent-workspace/.env."
+            "Error: No LLM configured. Please set USE_LOCAL_LLM=true in .env to use local models, "
+            "or set OPENROUTER_API_KEY."
         )
 
     try:
         from browser_use import Agent
 
-        # 1. Primary: OpenRouter (Universal Provider)
-        if openrouter_key:
+        # 1. Local Open Source Model (Ollama / LM Studio / vLLM)
+        if use_local:
             from langchain_openai import ChatOpenAI
-            model_name = os.getenv("OPENROUTER_MODEL", "anthropic/claude-3.5-sonnet")
+            local_base_url = os.getenv("LOCAL_LLM_BASE_URL", "http://localhost:11434/v1")
+            local_model = os.getenv("LOCAL_LLM_MODEL", "qwen2.5-coder:14b")
+            llm = ChatOpenAI(
+                model=local_model,
+                api_key="local-token",
+                base_url=local_base_url,
+            )
+        # 2. Primary Cloud: OpenRouter (Universal Provider)
+        elif openrouter_key:
+            from langchain_openai import ChatOpenAI
+            model_name = os.getenv("OPENROUTER_MODEL", "google/gemini-3.8-flash")
             base_url = os.getenv("OPENROUTER_BASE_URL", "https://openrouter.ai/api/v1")
             llm = ChatOpenAI(
                 model=model_name,
