@@ -28,9 +28,13 @@ build/
 dist/
 *.egg-info/
 
-# Playwright & Browser Artifacts
+# Playwright & AI-Generated Artifacts
 desktop-agent-workspace/screenshots/*.png
 !desktop-agent-workspace/screenshots/.gitkeep
+artifacts/sessions/
+artifacts/*/*
+!artifacts/.gitkeep
+sessions/
 *.png
 *.jpg
 *.jpeg
@@ -63,4 +67,5 @@ chrome_*.png
 .idea/
 .DS_Store
 Thumbs.db
+
 
