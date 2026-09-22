@@ -1,10 +1,12 @@
-# Architecture & Setup Reference (Universal & OpenRouter)
+# Architecture & Setup Reference: Hybrid, Local & Cloud Agent
 
-This document records the exact architecture, OpenRouter wiring, and cross-platform configuration specifications for the autonomous Computer-Use agent setup.
+This document records the exact architecture, OpenRouter & Ollama wiring, and cross-platform configuration specifications for the autonomous Computer-Use agent setup.
 
 ---
 
 ## 🏛️ System Architecture
+
+System Control AI connects high-level AI reasoning with low-level OS and browser control via three distinct execution tiers:
 
 ```
 +-------------------------------------------------------------------------+
@@ -13,25 +15,19 @@ This document records the exact architecture, OpenRouter wiring, and cross-platf
                                      |
                                      v
 +-------------------------------------------------------------------------+
-|                       LLM PROVIDER: OPENROUTER                          |
-|             Base URL: https://openrouter.ai/api/v1                      |
-|             Supported: Claude 3.5 Sonnet, Gemini 2.5 Pro, DeepSeek,     |
-|                        GPT-4o, Llama 3.3, Qwen Coder                    |
-+------------------------------------+------------------------------------+
-                                     |
-                                     v
-+-------------------------------------------------------------------------+
-|                        ORCHESTRATOR / CORE AGENT                        |
+|                  TIER 1: HIGH-LEVEL ORCHESTRATOR                        |
 |                                                                         |
-|   AAIF Goose CLI              <OR>    Universal Python Agent Script     |
-|   Provider: openrouter                Client: OpenAI-compatible API     |
+|   OpenRouter (Gemini 3.8 Flash / Claude 3.5 Sonnet)                     |
+|   • Decides high-level multi-step plans                                 |
+|   • Dispatches sub-tasks to local actuators                             |
+|   • Low token consumption (sent only for orchestrating decisions)       |
 +------------------------------------+------------------------------------+
                                      |
-               Model Context Protocol (MCP over stdio)
+                    Model Context Protocol (MCP over stdio)
                                      |
                                      v
 +-------------------------------------------------------------------------+
-|                       BROWSER-USE MCP SERVER                            |
+|                  TIER 2: BROWSER-USE MCP SERVER                         |
 |             (desktop-agent-workspace/browser_use_mcp_server.py)         |
 |                                                                         |
 |  Tools Registered:                                                      |
@@ -42,29 +38,56 @@ This document records the exact architecture, OpenRouter wiring, and cross-platf
 |   - browser_get_content(max_length)                                     |
 |   - browser_take_screenshot(filename)                                   |
 |   - browser_scroll(direction, amount)                                   |
-|   - browser_run_agent(task_instruction)  [Powered by OpenRouter]        |
+|   - browser_run_agent(task_instruction)                                 |
 |   - browser_close()                                                     |
 +------------------------------------+------------------------------------+
                                      |
-                               Playwright
+           Autonomous Task Loop powered by Local Sub-Agent
+                                     |
+                                     v
++-------------------------------------------------------------------------+
+|                  TIER 3: LOCAL SUB-AGENT WORKER                         |
+|                                                                         |
+|   Ollama: Qwen 2.5 Coder 7B / 3B on NVIDIA GeForce GTX 1650 (CUDA)      |
+|   • Repetitive DOM analysis, clicking, and typing                       |
+|   • 100% Free on GPU ($0.00 Tokens)                                     |
+|   • Zero network latency for sub-agent iterations                       |
++------------------------------------+------------------------------------+
+                                     |
+                                 Playwright
                                      |
                                      v
 +-------------------------------------------------------------------------+
 |                         PLAYWRIGHT CHROMIUM                             |
 |          Visible Window on Desktop (BROWSER_HEADLESS=false)             |
 |          Actions executed: click, scroll, fill, navigation              |
-|          Supported OS: Linux, macOS, Windows                            |
+|          Supported OS: Windows, Linux, macOS                            |
 +-------------------------------------------------------------------------+
 ```
 
 ---
 
-## ⚙️ Cross-Platform Goose Configuration
+## ⚙️ Cross-Platform Goose Configuration (`config.yaml`)
 
-Goose natively supports OpenRouter as a provider:
+Generated automatically by `configure_environment.py`:
 ```yaml
+# Goose Global Configuration
+active_provider: openrouter
 GOOSE_PROVIDER: openrouter
-GOOSE_MODEL: anthropic/claude-3.5-sonnet
+GOOSE_MODEL: google/gemini-3.8-flash
+GOOSE_TELEMETRY_ENABLED: false
+GOOSE_TOOLSHIM: false
+
+providers:
+  ollama:
+    enabled: true
+    model: qwen2.5-coder:7b
+    host: http://localhost:11434
+    configured: true
+  openrouter:
+    enabled: true
+    model: google/gemini-3.8-flash
+    configured: true
 
 extensions:
   developer:
@@ -75,38 +98,52 @@ extensions:
     enabled: true
     name: browser_use
     type: stdio
-    cmd: "<dynamically detected uv binary>"
+    cmd: "<detected uv binary>"
     args:
       - --directory
-      - "<dynamically detected workspace path>"
+      - "<workspace path>"
       - run
       - python
       - browser_use_mcp_server.py
     envs:
       BROWSER_HEADLESS: "false"
       BROWSER_USE_LOGGING_LEVEL: "info"
-      OPENROUTER_API_KEY: "<your_openrouter_api_key>"
-      OPENROUTER_MODEL: "anthropic/claude-3.5-sonnet"
+      USE_LOCAL_LLM: "true"
+      LOCAL_LLM_BASE_URL: "http://localhost:11434/v1"
+      LOCAL_LLM_MODEL: "qwen2.5-coder:7b"
+      OPENROUTER_API_KEY: "<registered_openrouter_key>"
     timeout: 300
     description: "Browser-Use MCP Server: Autonomous browser actuation powered by Playwright and Chromium"
 ```
 
-### Automatic Path Resolution (`configure_environment.py`)
-Rather than maintaining separate OS configurations manually, `configure_environment.py`:
-1. Discovers the active `uv` binary via `shutil.which("uv")` or standard user paths (`~/.local/bin/uv`, `/usr/local/bin/uv`, `/opt/homebrew/bin/uv`).
-2. Calculates the absolute path of `desktop-agent-workspace`.
-3. Injects the configuration into every standard Goose directory:
-   - **Linux**: `~/.config/goose` and `$XDG_CONFIG_HOME/goose`
-   - **macOS**: `~/Library/Application Support/goose` and `~/.config/goose`
-   - **Windows**: `%APPDATA%\Block\goose\config`, `%APPDATA%\goose`, and `~/.config/goose`
+### Key Optimizations:
+1. **`GOOSE_TOOLSHIM: false`**: OpenRouter models natively support function calling. Disabling toolshim eliminates unnecessary 404 queries looking for `mistral-nemo`.
+2. **Platform Extension Pruning**: Unused default extensions (`todo`, `analyze`, `tom`, `scheduler`, `apps`, `chatrecall`) are disabled (`enabled: false`), preventing slow background loading.
+3. **Hardware Acceleration**: `USE_LOCAL_LLM: "true"` routes inner-loop browser actions to local Ollama on the laptop's GTX 1650.
 
 ---
 
-## 🔑 OpenRouter Integration Details
+## 🔑 Mode Comparison Table
 
-1. **Authentication**: `OPENROUTER_API_KEY` (passed to Goose, Browser-Use, and the Python agent).
-2. **Model Routing**: Models follow the format `<provider>/<model-slug>`, for example:
-   - `anthropic/claude-3.5-sonnet`
-   - `google/gemini-2.5-pro`
-   - `deepseek/deepseek-chat`
-3. **Endpoint**: `https://openrouter.ai/api/v1` (OpenAI-compatible chat completions endpoint).
+| Feature | Hybrid Mode | Pure Local Mode | Pure Cloud Mode |
+| :--- | :--- | :--- | :--- |
+| **Top Orchestrator** | OpenRouter (Gemini / Claude) | Ollama (Qwen2.5-Coder:7B) | OpenRouter |
+| **Inner Sub-Agent** | Ollama (Qwen2.5-Coder:7B) | Ollama (Qwen2.5-Coder:7B) | OpenRouter |
+| **Cloud Token Cost** | **Minimal (~90% savings)** | **$0.00 (Zero)** | Standard per-token cost |
+| **Internet Requirement**| Required for planner | Completely Air-gapped | Required |
+| **Launch Command** | `launch_system_control.bat` [1] | `launch_system_control.bat` [2] | `launch_system_control.bat` [3] |
+
+---
+
+## 🛠️ Verification Commands
+
+```powershell
+# Run all unit and integration tests
+uv run pytest
+
+# Test visible Chromium actuation
+uv run python browser_use_mcp_server.py --test
+
+# Test local LLM inference on GTX 1650
+python test_local_inference.py
+```

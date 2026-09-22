@@ -1,143 +1,149 @@
-# System Control AI: Universal Computer-Use Agent
+# System Control AI: Universal Autonomous Computer-Use Agent
 
-A **general-purpose, cross-platform** local "Computer Use" agent powered by **AAIF Goose**, **uv**, **Browser-Use MCP**, and **OpenRouter**.
+A **general-purpose, cross-platform** autonomous computer and browser actuation agent powered by **AAIF Goose**, **Ollama**, **Playwright**, and **OpenRouter**.
 
-Supports **Windows**, **macOS**, and **Linux** without OS lock-in.
+Supports **Windows**, **macOS**, and **Linux** with hardware-accelerated local execution and intelligent cloud orchestration.
 
 ---
 
-## ⚡ System Overview
+## ⚡ System Architecture
 
-| Component | Role | Details |
-| :--- | :--- | :--- |
-| **LLM Provider** | **OpenRouter** (Universal) | Single key for Claude 3.5 Sonnet, Gemini 2.5 Pro, DeepSeek R1, GPT-4o |
-| **Core System Agent** | **Goose (AAIF)** | Autonomous system agent (terminal, code execution, MCP) |
-| **Browser Actuator** | **Browser-Use MCP Server** | Live Playwright Chromium control (click, type, navigate, screenshot) |
-| **Package Manager** | **Astral uv** | Cross-platform fast Python & virtualenv manager |
-| **Configuration Generator** | **`configure_environment.py`** | Automatic OS & path detection for Windows, macOS, and Linux |
+System Control AI supports **three flexible execution modes**, giving you the optimal balance between high intelligence and zero token costs:
+
+```
+┌────────────────────────────────────────────────────────────────────────┐
+│                        MODE 1: HYBRID [RECOMMENDED]                    │
+│                                                                        │
+│   [ Cloud Orchestrator ]            [ Local Worker Sub-Agent ]        │
+│   OpenRouter (Gemini / Claude) ───► Ollama Qwen2.5-Coder:7B (GPU)     │
+│   • High-level task planning        • Repetitive DOM clicks & typing   │
+│   • Vision reasoning                • Chromium navigation & scrolling  │
+│   • 1–2 cloud calls only            • $0.00 Tokens (100% Free on GPU)  │
+│                       Savings: ~90% Cost Reduction                     │
+└────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                        MODE 2: 100% LOCAL (AIR-GAPPED)                 │
+│   • Orchestrator & Worker: Ollama (Qwen2.5-Coder:7B or 3B)            │
+│   • Hardware: NVIDIA GeForce GTX 1650 (CUDA) + Ryzen 5 CPU            │
+│   • Cost: $0.00 / Zero Cloud API Keys Required                        │
+└────────────────────────────────────────────────────────────────────────┘
+
+┌────────────────────────────────────────────────────────────────────────┐
+│                        MODE 3: 100% CLOUD                              │
+│   • Orchestrator & Worker: OpenRouter (Gemini 3.8 Flash / Claude 3.5) │
+│   • Maximum capability for complex multi-modal workflows               │
+└────────────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 💻 Hardware Acceleration (Auto-Detected)
+
+Tested and verified on laptop hardware:
+- **GPU**: NVIDIA GeForce GTX 1650 (4 GB GDDR6 VRAM, CUDA 13.3) — 12 model layers offloaded into VRAM (~1.9 GB VRAM usage).
+- **CPU**: AMD Ryzen 5 4600H (6 Cores / 12 Threads, 4.0 GHz) — handles remaining offloaded layers.
+- **RAM**: 16 GB DDR4.
+- **Local Model**: `qwen2.5-coder:7b` (4.7 GB) or ultra-fast `qwen2.5-coder:3b` (1.9 GB, 100% VRAM fit).
 
 ---
 
 ## 🚀 Quickstart
 
-### 1. Set Your OpenRouter API Key
-Open `desktop-agent-workspace/.env` and paste your OpenRouter key:
-```ini
+### 1. Configure Your Environment
+Create or edit `desktop-agent-workspace/.env`:
+```dotenv
+# Execution Mode: hybrid | local | cloud
+EXECUTION_MODE=hybrid
+
+# OpenRouter (Cloud Orchestrator)
 OPENROUTER_API_KEY=sk-or-v1-your_key_here
-OPENROUTER_MODEL=anthropic/claude-3.5-sonnet
+OPENROUTER_MODEL=google/gemini-3.8-flash
 OPENROUTER_BASE_URL=https://openrouter.ai/api/v1
+
+# Local LLM (Ollama Worker on GTX 1650)
+USE_LOCAL_LLM=true
+LOCAL_LLM_PROVIDER=ollama
+LOCAL_LLM_BASE_URL=http://localhost:11434/v1
+LOCAL_LLM_MODEL=qwen2.5-coder:7b
+OLLAMA_HOST=http://localhost:11434
+
+# Browser Automation
 BROWSER_HEADLESS=false
+BROWSER_USE_LOGGING_LEVEL=info
 ```
 
-### 2. Run the Universal Configurator
-Run this command on any operating system (Windows, macOS, Linux):
+### 2. Generate Configuration
+Run the automatic cross-platform configurator:
 ```bash
-# Windows (PowerShell / CMD):
-uv run python configure_environment.py
-
-# macOS / Linux (bash / zsh):
-uv run python3 configure_environment.py
+python configure_environment.py
 ```
-> This dynamically locates your `uv` binary, detects your OS, and registers the `browser_use` MCP server in Goose's global configuration with OpenRouter enabled.
+This dynamically locates your `uv` binary, configures Goose's global settings, registers the `browser_use` MCP server, and disables unused platform extensions for maximum speed.
 
-### 3. Test the Environment & Capabilities
-Run the automated test suite across all subsystems:
+### 3. Launch System Control AI
+On Windows, run the interactive launcher:
+```powershell
+.\launch_system_control.bat
+```
+
+You will see the 8-option interactive menu:
+```text
+=====================================================================
+             SYSTEM CONTROL AI - AUTONOMOUS AGENT
+=====================================================================
+ [1] Start Goose Session (HYBRID: Cloud Orchestrator + Local Worker) [RECOMMENDED]
+ [2] Start Goose Session (100% Local: Ollama Qwen2.5-Coder:7B)
+ [3] Start Goose Session (100% Cloud: OpenRouter Gemini 3.8 Flash)
+ [4] Test Browser Control (Visible Chromium Actuator Test)
+ [5] Run Antigravity Agent Script
+ [6] Test Local LLM Benchmark (Qwen2.5-Coder:7B via Ollama)
+ [7] Run Diagnostics & Tests
+ [8] Exit
+=====================================================================
+```
+*(Default option `[1]` auto-starts in 5 seconds if no key is pressed).*
+
+---
+
+## 🧪 Testing & Verification
+
+Run the comprehensive 20-test automated test suite:
 ```bash
-# Run full suite (17 tests: environment, cross-platform, MCP, OpenRouter)
-uv run python run_tests.py
-
-# Run quick unit tests (skip browser UI)
-uv run python run_tests.py --fast
-
-# Test live OpenRouter API connection
-uv run python run_tests.py --live
+cd desktop-agent-workspace
+uv run pytest
 ```
-See the full [TESTING_GUIDE.md](file:///c:/Users/nites/Documents/ExpertByAi/system-controlAi/TESTING_GUIDE.md) for detailed test architecture.
+```text
+tests\test_browser_mcp.py .....       [ 25%]
+tests\test_cross_platform.py ....     [ 45%]
+tests\test_environment.py .....       [ 70%]
+tests\test_local_llm.py ...           [ 85%]
+tests\test_openrouter_config.py ...   [100%]
 
-### 4. Test Browser-Use MCP Directly (Visible Window)
-Verify that Chromium launches and actuates visibly on your screen:
+============================= 20 passed in 10.41s =============================
+```
+
+To test visible Chromium actuation directly:
 ```bash
 cd desktop-agent-workspace
 uv run python browser_use_mcp_server.py --test
 ```
-Chromium will open, navigate to Hacker News, save a screenshot to `screenshots/test_nav.png`, and report status.
-
-### 5. Launch Goose with Autonomous Browser Control
-```bash
-goose session
-```
-In the Goose session, ask it to operate the browser:
-```text
-> Use the browser-use extension to open https://news.ycombinator.com and summarize the top 3 stories.
-```
-Because `BROWSER_HEADLESS=false`, you will watch the browser navigate, click, and interact with the web live on your screen!
-
-### 5. Run Native Antigravity / OpenRouter Script
-```bash
-cd desktop-agent-workspace
-uv run python antigravity_agent.py
-```
 
 ---
 
-## 🌐 Supported OpenRouter Models
+## 📁 Repository Documentation
 
-You can change `OPENROUTER_MODEL` in `.env` to any model on [openrouter.ai/models](https://openrouter.ai/models):
-
-- `anthropic/claude-3.5-sonnet` (Recommended for complex reasoning & computer use)
-- `google/gemini-2.5-pro` (Fast, high-context reasoning)
-- `deepseek/deepseek-chat` (High performance, low cost)
-- `openai/gpt-4o` (Multimodal, general coding)
-- `meta-llama/llama-3.3-70b-instruct` (Open source weights)
-
----
-
-## 🖥️ Cross-Platform Commands
-
-### Linux / macOS
-```bash
-# Install uv (if needed)
-curl -LsSf https://astral.sh/uv/install.sh | sh
-
-# Configure environment
-uv run python3 configure_environment.py
-
-# Launch agent
-goose session
-```
-
-### Windows
-```powershell
-# Install uv (if needed)
-powershell -ExecutionPolicy ByPass -Command "irm https://astral.sh/uv/install.ps1 | iex"
-
-# Configure environment
-uv run python configure_environment.py
-
-# Launch agent
-goose session
-```
+| Guide | Description |
+| :--- | :--- |
+| [HYBRID_ARCHITECTURE.md](file:///c:/Users/nites/Documents/ExpertByAi/system-controlAi/HYBRID_ARCHITECTURE.md) | In-depth cost comparison, sequence diagrams, and token savings breakdown. |
+| [LOCAL_LLM_GUIDE.md](file:///c:/Users/nites/Documents/ExpertByAi/system-controlAi/LOCAL_LLM_GUIDE.md) | Complete guide for setting up Ollama, downloading models, and optimizing GPU offload. |
+| [HARDWARE_EVALUATION.md](file:///c:/Users/nites/Documents/ExpertByAi/system-controlAi/HARDWARE_EVALUATION.md) | Hardware profile, VRAM benchmarks, and model fit evaluation. |
+| [SETUP_AND_ARCHITECTURE.md](file:///c:/Users/nites/Documents/ExpertByAi/system-controlAi/SETUP_AND_ARCHITECTURE.md) | Technical architecture, Goose MCP wiring, and protocol specifications. |
+| [TESTING_GUIDE.md](file:///c:/Users/nites/Documents/ExpertByAi/system-controlAi/TESTING_GUIDE.md) | Test runner reference and unit testing instructions. |
+| [MEMORY_AND_OPERATIONS_GUIDE.md](file:///c:/Users/nites/Documents/ExpertByAi/system-controlAi/MEMORY_AND_OPERATIONS_GUIDE.md) | Operational playbooks, debugging, and memory retention. |
 
 ---
 
-## 📁 Repository Layout
-
-```
-system-controlAi/
-├── configure_environment.py            # Universal cross-platform configuration generator
-├── README.md                           # Main documentation & quickstart
-├── HYBRID_ARCHITECTURE.md              # Cost-saving Hybrid Architecture (Cloud Orchestrator + Local Worker)
-├── HARDWARE_EVALUATION.md              # Laptop hardware audit & model benchmark evaluation
-├── LOCAL_LLM_GUIDE.md                  # Comprehensive guide for running open-source local LLMs (Ollama / LM Studio)
-├── TESTING_GUIDE.md                    # Test suite runner and automated test cases
-├── SETUP_AND_ARCHITECTURE.md           # Architecture, OpenRouter wiring & MCP schema
-├── MEMORY_AND_OPERATIONS_GUIDE.md      # Maintenance guide, commands, and debugging
-└── desktop-agent-workspace/            # Python agent workspace
-    ├── .env                            # Active environment variables (API keys)
-    ├── .env.example                    # Template environment file
-    ├── pyproject.toml                  # Python 3.12 dependencies
-    ├── browser_use_mcp_server.py       # Cross-platform MCP server (stdio & test mode)
-    ├── antigravity_agent.py            # Universal OpenRouter / Local LLM agent
-    ├── screenshots/                    # Captured browser screenshots
-    └── src/                            # Package source modules
-```
+## 🛡️ Privacy & Safety
+- **No Secrets in Git**: Sensitive credentials in `.env` are automatically ignored by `.gitignore`.
+- **Local Control**: With `USE_LOCAL_LLM=true`, inner-loop browser actions stay completely on your machine.
+- **Cross-Platform**: Works identically on Windows, Linux, and macOS.

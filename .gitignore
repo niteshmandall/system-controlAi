@@ -31,9 +31,36 @@ dist/
 # Playwright & Browser Artifacts
 desktop-agent-workspace/screenshots/*.png
 !desktop-agent-workspace/screenshots/.gitkeep
+*.png
+*.jpg
+*.jpeg
+*.webp
+
+# Scratch and Temporary Automation Scripts
+scratch/
+job_links.json
+apply_ashby*.py
+check_ashby*.py
+fetch_sheet*.py
+inspect_ashby*.py
+search_ddg.py
+check_aiprise*.ps1
+click_*.ps1
+close_*.ps1
+fill_*.ps1
+load_*.ps1
+open_*.ps1
+program_*.ps1
+scroll_*.ps1
+select_*.ps1
+show_*.ps1
+switch_*.ps1
+type_*.ps1
+chrome_*.png
 
 # IDE and OS
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
+
